@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Admin {
-
     private JFrame frame;
     private JTable bookTable;
     private DefaultTableModel tableModel;
@@ -137,7 +136,6 @@ public class Admin {
         bookTable.setModel(searchModel);
         bookTable.getColumnModel().getColumn(4).setCellRenderer(new ButtonRenderer());
         bookTable.getColumnModel().getColumn(4).setCellEditor(new ButtonEditor(new JCheckBox(), "Edit"));
-
         bookTable.getColumnModel().getColumn(5).setCellRenderer(new ButtonRenderer());
         bookTable.getColumnModel().getColumn(5).setCellEditor(new ButtonEditor(new JCheckBox(), "Remove"));
     }
