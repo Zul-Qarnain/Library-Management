@@ -187,15 +187,71 @@ public class BookStoreApp {
     }
 
     private void checkout() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("cart.txt"))) {
-            for (CartItem item : cartItems) {
-                writer.write(item.getBook().getTitle() + "," +item.getBook().getAuthor()+","+ item.getQuantity() + "," + item.getBook().getPrice());
-                writer.newLine();
+        double totalPrice = 0;
+        for (CartItem item : cartItems) {
+            totalPrice += item.getBook().getPrice() * item.getQuantity();
+        }
+        final double finalTotalPrice = totalPrice;
+
+        JDialog paymentDialog = new JDialog(frame, "Payment", true);
+        paymentDialog.setSize(300, 200);
+        paymentDialog.setLayout(new GridLayout(4, 2));
+
+        JLabel paymentLabel = new JLabel("Pay with:");
+        paymentDialog.add(paymentLabel);
+
+        JComboBox<String> paymentOptions = new JComboBox<>(new String[]{"bkash", "rocket", "nagad"});
+        paymentDialog.add(paymentOptions);
+        JLabel mobileLabel = new JLabel("Mobile Number:");
+        paymentDialog.add(mobileLabel);
+
+        JTextField mobileField = new JTextField();
+        paymentDialog.add(mobileField);
+
+        JLabel totalAmountLabel = new JLabel("Total Amount: $" + String.format("%.2f", finalTotalPrice));
+        paymentDialog.add(totalAmountLabel);
+
+        JButton confirmButton = new JButton("Confirm Payment");
+        paymentDialog.add(confirmButton);
+
+        confirmButton.addActionListener(e -> {
+            String selectedPaymentMethod = paymentOptions.getSelectedItem().toString();
+            String mobileNumber = mobileField.getText();
+
+            if (mobileNumber.isEmpty()) {
+                JOptionPane.showMessageDialog(paymentDialog, "Please enter a mobile number.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
             }
-            JOptionPane.showMessageDialog(frame, "Checkout successful! Cart items saved to cart.txt");
-            cartItems.clear(); // Clear the cart after checkout
+
+            String transactionId = generateTransactionId();
+            saveTransactionDetails(mobileNumber, selectedPaymentMethod, transactionId, finalTotalPrice);
+
+            JOptionPane.showMessageDialog(paymentDialog, "Payment successful! Transaction ID: " + transactionId);
+            paymentDialog.dispose();
+            cartItems.clear();
+        });
+
+        JButton cancelButton = new JButton("Cancel");
+        paymentDialog.add(cancelButton);
+        cancelButton.addActionListener(e -> paymentDialog.dispose());
+
+        paymentDialog.setVisible(true);
+    }
+
+
+    private String generateTransactionId() {
+        // Generate a random transaction ID
+        int transactionId = (int) (Math.random() * 1000000); // Generates a random 6-digit number
+        return "TXN" + transactionId;
+    }
+
+    private void saveTransactionDetails(String mobileNumber, String paymentMethod, String transactionId, double totalPrice) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("cart.txt", true))) {
+            // Save mobile number, payment method, transaction ID, and total price separated by commas
+            writer.write(mobileNumber + "," + paymentMethod + "," + transactionId + "," + String.format("%.2f", totalPrice));
+            writer.newLine();
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(frame, "Error saving cart items to file.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(frame, "Error saving transaction details.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
