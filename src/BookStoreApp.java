@@ -194,41 +194,54 @@ public class BookStoreApp {
         final double finalTotalPrice = totalPrice;
 
         JDialog paymentDialog = new JDialog(frame, "Payment", true);
-        paymentDialog.setSize(300, 200);
-        paymentDialog.setLayout(new GridLayout(4, 2));
+        paymentDialog.setSize(400, 300);
+        paymentDialog.setLayout(new GridLayout(6, 2));
 
-        JLabel paymentLabel = new JLabel("Pay with:");
+        JLabel paymentLabel = new JLabel("Payment Method:");
         paymentDialog.add(paymentLabel);
 
-        JComboBox<String> paymentOptions = new JComboBox<>(new String[]{"bkash", "rocket", "nagad"});
+        JComboBox<String> paymentOptions = new JComboBox<>(new String[]{"Cash", "Baki"});
         paymentDialog.add(paymentOptions);
+
         JLabel mobileLabel = new JLabel("Mobile Number:");
         paymentDialog.add(mobileLabel);
 
         JTextField mobileField = new JTextField();
         paymentDialog.add(mobileField);
 
+        JLabel transactionLabel = new JLabel("Transaction ID:");
+        paymentDialog.add(transactionLabel);
+
+        JTextField transactionField = new JTextField();
+        paymentDialog.add(transactionField);
+
+        JLabel addressLabel = new JLabel("Address:");
+        paymentDialog.add(addressLabel);
+
+        JTextField addressField = new JTextField();
+        paymentDialog.add(addressField);
+
         JLabel totalAmountLabel = new JLabel("Total Amount: $" + String.format("%.2f", finalTotalPrice));
         paymentDialog.add(totalAmountLabel);
 
-        JButton confirmButton = new JButton("Confirm Payment");
-        paymentDialog.add(confirmButton);
+        JButton buyNowButton = new JButton("Buy Now");
+        paymentDialog.add(buyNowButton);
 
-        confirmButton.addActionListener(e -> {
-            String selectedPaymentMethod = paymentOptions.getSelectedItem().toString();
+        buyNowButton.addActionListener(e -> {
+            String paymentMethod = paymentOptions.getSelectedItem().toString();
             String mobileNumber = mobileField.getText();
+            String transactionId = transactionField.getText();
+            String address = addressField.getText();
 
-            if (mobileNumber.isEmpty()) {
-                JOptionPane.showMessageDialog(paymentDialog, "Please enter a mobile number.", "Error", JOptionPane.ERROR_MESSAGE);
+            if (mobileNumber.isEmpty() || transactionId.isEmpty() || address.isEmpty()) {
+                JOptionPane.showMessageDialog(paymentDialog, "All fields are required.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            String transactionId = generateTransactionId();
-            saveTransactionDetails(mobileNumber, selectedPaymentMethod, transactionId, finalTotalPrice);
-
-            JOptionPane.showMessageDialog(paymentDialog, "Payment successful! Transaction ID: " + transactionId);
-            paymentDialog.dispose();
+            saveTransactionDetails(mobileNumber, transactionId, paymentMethod, address, finalTotalPrice);
+            JOptionPane.showMessageDialog(paymentDialog, "Purchase successful!");
             cartItems.clear();
+            paymentDialog.dispose();
         });
 
         JButton cancelButton = new JButton("Cancel");
@@ -238,22 +251,15 @@ public class BookStoreApp {
         paymentDialog.setVisible(true);
     }
 
-
-    private String generateTransactionId() {
-        // Generate a random transaction ID
-        int transactionId = (int) (Math.random() * 1000000); // Generates a random 6-digit number
-        return "TXN" + transactionId;
-    }
-
-    private void saveTransactionDetails(String mobileNumber, String paymentMethod, String transactionId, double totalPrice) {
+    private void saveTransactionDetails(String mobileNumber, String transactionId, String paymentMethod, String address, double totalPrice) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("cart.txt", true))) {
-            // Save mobile number, payment method, transaction ID, and total price separated by commas
-            writer.write(mobileNumber + "," + paymentMethod + "," + transactionId + "," + String.format("%.2f", totalPrice));
+            writer.write(mobileNumber + "," + transactionId + "," + paymentMethod + "," + address + "," + String.format("%.2f", totalPrice));
             writer.newLine();
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(frame, "Error saving transaction details.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 
     static class Book {
         private String title;
