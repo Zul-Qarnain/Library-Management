@@ -218,8 +218,40 @@ public class Admin {
     }
 
     private void viewSales() {
-        // Display sales data here
-        JOptionPane.showMessageDialog(frame, "Sales data not implemented yet.");
+        JDialog salesDialog = new JDialog(frame, "Sales Report", true);
+        salesDialog.setSize(600, 400);
+        salesDialog.setLayout(new BorderLayout());
+
+        DefaultTableModel salesTableModel = new DefaultTableModel(
+                new Object[][]{},
+                new String[]{"Transaction ID", "Phone Number", "Buyer's address", "Total Price"}
+        );
+        JTable salesTable = new JTable(salesTableModel);
+        JScrollPane scrollPane = new JScrollPane(salesTable);
+        salesDialog.add(scrollPane, BorderLayout.CENTER);
+
+        try (BufferedReader reader = new BufferedReader(new FileReader("cart.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] transactionData = line.split(",");
+                if (transactionData.length >= 4) {
+                    String transactionId = transactionData[1];
+                    String phoneNumber = transactionData[0];
+                    String buyerAddress = transactionData[3];
+                    String totalPrice = transactionData[4];
+
+                    salesTableModel.addRow(new Object[]{transactionId, phoneNumber, buyerAddress, totalPrice});
+                }
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(frame, "Error loading sales data.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+
+        JButton closeButton = new JButton("Close");
+        closeButton.addActionListener(e -> salesDialog.dispose());
+        salesDialog.add(closeButton, BorderLayout.SOUTH);
+
+        salesDialog.setVisible(true);
     }
 
     static class Book {
