@@ -1,7 +1,7 @@
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
+import javax.swing.table.*;
 import java.awt.*;
+import java.awt.event.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,105 +15,96 @@ public class BookStoreApp {
     private List<Book> books;
     private List<CartItem> cartItems;
 
+    private static final String BOOK_DATA_FILE = "Bookdata.txt";
+
     public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            try {
-                BookStoreApp window = new BookStoreApp();
-                window.frame.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        EventQueue.invokeLater(() -> new BookStoreApp());
     }
 
     public BookStoreApp() {
-        initialize();
-        books = new ArrayList<>();
+        books = loadBooksFromFile(BOOK_DATA_FILE);
         cartItems = new ArrayList<>();
-        loadBooksFromFile();
-        // Preload some books into the store for customer to see
+        initializeUI();
     }
 
-    private void initialize() {
+    private void initializeUI() {
         frame = new JFrame("Book Store");
         frame.setBounds(100, 100, 800, 600);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.getContentPane().setLayout(new BorderLayout(0, 0));
 
-        JPanel panel = new JPanel();
-        frame.getContentPane().add(panel, BorderLayout.NORTH);
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
-
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         JLabel lblSearch = new JLabel("Search:");
-        panel.add(lblSearch);
-
-        searchField = new JTextField();
-        panel.add(searchField);
-        searchField.setColumns(10);
-
+        searchField = new JTextField(15);
         JButton btnSearch = new JButton("Search");
         btnSearch.addActionListener(e -> searchBooks());
-        panel.add(btnSearch);
 
-        JScrollPane scrollPane = new JScrollPane();
-        frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
+        searchPanel.add(lblSearch);
+        searchPanel.add(searchField);
+        searchPanel.add(btnSearch);
+        frame.getContentPane().add(searchPanel, BorderLayout.NORTH);
 
-        bookTable = new JTable();
-        tableModel = new DefaultTableModel(
-                new Object[][]{},
-                new String[]{"Title", "Quantity", "Price","Author","Action"}
-        ) {
+        tableModel = new DefaultTableModel(new Object[][]{}, new String[]{
+                "Title", "Author", "Quantity", "Price", "Action"
+        }) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 4; // Only allow editing the "Action" column (Add to Cart button)
+                return column == 4;
             }
         };
-        bookTable.setModel(tableModel);
-        scrollPane.setViewportView(bookTable);
 
-        // Set custom cell renderer and editor for the "Action" column
+        bookTable = new JTable(tableModel);
         bookTable.getColumnModel().getColumn(4).setCellRenderer(new ButtonRenderer());
         bookTable.getColumnModel().getColumn(4).setCellEditor(new ButtonEditor(new JCheckBox()));
+        JScrollPane scrollPane = new JScrollPane(bookTable);
+        frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
+
+        updateTable();
 
         JButton btnViewCart = new JButton("View Cart");
         btnViewCart.addActionListener(e -> viewCart());
         frame.getContentPane().add(btnViewCart, BorderLayout.SOUTH);
+        frame.setVisible(true);
     }
 
-    private void loadBooksFromFile() {
-        try (BufferedReader reader = new BufferedReader(new FileReader("Bookdata.txt"))) {
+    private List<Book> loadBooksFromFile(String filename) {
+        List<Book> loadedBooks = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] bookData = line.split(",");
                 if (bookData.length == 4) {
-                    String title = bookData[0];
-                    String author = bookData[1];
-                    int quantity = Integer.parseInt(bookData[2]);
-                    double price = Double.parseDouble(bookData[3]);
-                    books.add(new BookStoreApp.Book(title, author, quantity, price));
+                    String title = bookData[0].trim();
+                    String author = bookData[1].trim();
+                    int quantity = Integer.parseInt(bookData[2].trim());
+                    double price = Double.parseDouble(bookData[3].trim());
+                    loadedBooks.add(new Book(title, author, quantity, price));
                 }
             }
-            updateTable();
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(frame, "Error loading books from file.", "Error", JOptionPane.ERROR_MESSAGE);
         }
+        return loadedBooks;
     }
 
     private void searchBooks() {
         String searchTerm = searchField.getText().toLowerCase();
         DefaultTableModel searchModel = new DefaultTableModel(
                 new Object[][]{},
-                new String[]{"Title", "Quantity", "Price", "Action"}
+                new String[]{"Title", "Author", "Quantity", "Price", "Action"}
         ) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 4; // Only allow editing the "Action" column (Add to Cart button)
+                return column == 4;
             }
         };
 
         for (Book book : books) {
-            if (book.getTitle().toLowerCase().contains(searchTerm)) {
-                searchModel.addRow(new Object[]{book.getTitle(),book.getAuthor(), book.getQuantity(), book.getPrice(), "Add to Cart"});
+            if (book.getTitle().toLowerCase().contains(searchTerm)
+                    || book.getAuthor().toLowerCase().contains(searchTerm)) {
+                searchModel.addRow(new Object[]{
+                        book.getTitle(), book.getAuthor(), book.getQuantity(), book.getPrice(), "Add to Cart"
+                });
             }
         }
 
@@ -123,27 +114,21 @@ public class BookStoreApp {
     }
 
     private void updateTable() {
-        tableModel.setRowCount(0); // Clear existing data
-
+        tableModel.setRowCount(0);
         for (Book book : books) {
-            tableModel.addRow(new Object[]{book.getTitle(),book.getAuthor(), book.getQuantity(), book.getPrice(), "Add to Cart"});
+            tableModel.addRow(new Object[]{
+                    book.getTitle(), book.getAuthor(), book.getQuantity(), book.getPrice(), "Add to Cart"
+            });
         }
     }
 
-    private void addToCart(Book book) {
-        SpinnerNumberModel model = new SpinnerNumberModel(1, 1, book.getQuantity(), 1);
-        JSpinner quantitySpinner = new JSpinner(model);
-
-        Object[] message = {
-                "Quantity:", quantitySpinner
-        };
-
-        int option = JOptionPane.showConfirmDialog(frame, message, "Add to Cart", JOptionPane.OK_CANCEL_OPTION);
-        if (option == JOptionPane.OK_OPTION) {
-            int quantity = (int) quantitySpinner.getValue();
-            cartItems.add(new CartItem(book, quantity));
-            JOptionPane.showMessageDialog(frame, "Book added to cart!");
+    private void addToCart(Book book, int quantity) {
+        if (quantity > book.getQuantity()) {
+            JOptionPane.showMessageDialog(frame, "Requested quantity is not available", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
+        cartItems.add(new CartItem(book, quantity));
+        JOptionPane.showMessageDialog(frame, "Book added to cart!");
     }
 
     private void viewCart() {
@@ -158,7 +143,7 @@ public class BookStoreApp {
 
         DefaultTableModel cartTableModel = new DefaultTableModel(
                 new Object[][]{},
-                new String[]{"Title", "Quantity","Author","Price", "Total"}
+                new String[]{"Title", "Author", "Quantity", "Price", "Total"}
         );
         JTable cartTable = new JTable(cartTableModel);
         JScrollPane cartScrollPane = new JScrollPane(cartTable);
@@ -167,7 +152,10 @@ public class BookStoreApp {
         double totalPrice = 0;
         for (CartItem item : cartItems) {
             double itemTotal = item.getBook().getPrice() * item.getQuantity();
-            cartTableModel.addRow(new Object[]{item.getBook().getTitle(),item.getBook().getAuthor(), item.getQuantity(), item.getBook().getPrice(), itemTotal});
+            cartTableModel.addRow(new Object[]{
+                    item.getBook().getTitle(), item.getBook().getAuthor(),
+                    item.getQuantity(), item.getBook().getPrice(), itemTotal
+            });
             totalPrice += itemTotal;
         }
 
@@ -177,7 +165,7 @@ public class BookStoreApp {
 
         JButton checkoutButton = new JButton("Checkout");
         checkoutButton.addActionListener(e -> {
-            checkout();
+            checkout(); // Call the checkout method
             cartDialog.dispose();
         });
         bottomPanel.add(checkoutButton, BorderLayout.EAST);
@@ -187,127 +175,34 @@ public class BookStoreApp {
     }
 
     private void checkout() {
-        double totalPrice = 0;
-        for (CartItem item : cartItems) {
-            totalPrice += item.getBook().getPrice() * item.getQuantity();
+        if (cartItems.isEmpty()) {
+            JOptionPane.showMessageDialog(frame, "Your cart is empty.");
+            return;
         }
-        final double finalTotalPrice = totalPrice;
 
-        JDialog paymentDialog = new JDialog(frame, "Payment", true);
-        paymentDialog.setSize(400, 300);
-        paymentDialog.setLayout(new GridLayout(6, 2));
+        saveCartItemsToFile("cart.txt", cartItems);
 
-        JLabel paymentLabel = new JLabel("Payment Method:");
-        paymentDialog.add(paymentLabel);
+        new Payment(cartItems);
+    }
 
-        JComboBox<String> paymentOptions = new JComboBox<>(new String[]{"Cash", "Baki"});
-        paymentDialog.add(paymentOptions);
-
-        JLabel mobileLabel = new JLabel("Mobile Number:");
-        paymentDialog.add(mobileLabel);
-
-        JTextField mobileField = new JTextField();
-        paymentDialog.add(mobileField);
-
-        JLabel transactionLabel = new JLabel("Transaction ID:");
-        paymentDialog.add(transactionLabel);
-
-        JTextField transactionField = new JTextField();
-        paymentDialog.add(transactionField);
-
-        JLabel addressLabel = new JLabel("Address:");
-        paymentDialog.add(addressLabel);
-
-        JTextField addressField = new JTextField();
-        paymentDialog.add(addressField);
-
-        JLabel totalAmountLabel = new JLabel("Total Amount: $" + String.format("%.2f", finalTotalPrice));
-        paymentDialog.add(totalAmountLabel);
-
-        JButton buyNowButton = new JButton("Buy Now");
-        paymentDialog.add(buyNowButton);
-
-        buyNowButton.addActionListener(e -> {
-            String paymentMethod = paymentOptions.getSelectedItem().toString();
-            String mobileNumber = mobileField.getText();
-            String transactionId = transactionField.getText();
-            String address = addressField.getText();
-
-            if (mobileNumber.isEmpty() || transactionId.isEmpty() || address.isEmpty()) {
-                JOptionPane.showMessageDialog(paymentDialog, "All fields are required.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
+    private void saveCartItemsToFile(String filename, List<CartItem> items) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
+            for (CartItem item : items) {
+                Book book = item.getBook();
+                writer.write(book.getTitle() + "," + book.getAuthor() + "," + item.getQuantity() + "," + book.getPrice());
+                writer.newLine();
             }
-
-            saveTransactionDetails(mobileNumber, transactionId, paymentMethod, address, finalTotalPrice);
-            JOptionPane.showMessageDialog(paymentDialog, "Purchase successful!");
-            cartItems.clear();
-            paymentDialog.dispose();
-        });
-
-        JButton cancelButton = new JButton("Cancel");
-        paymentDialog.add(cancelButton);
-        cancelButton.addActionListener(e -> paymentDialog.dispose());
-
-        paymentDialog.setVisible(true);
-    }
-
-    private void saveTransactionDetails(String mobileNumber, String transactionId, String paymentMethod, String address, double totalPrice) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("cart.txt", true))) {
-            writer.write(mobileNumber + "," + transactionId + "," + paymentMethod + "," + address + "," + String.format("%.2f", totalPrice));
-            writer.newLine();
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(frame, "Error saving transaction details.", "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(frame, "Error saving cart to file.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-
-    static class Book {
-        private String title;
-        private String author;
-        private int quantity;
-        private double price;
-
-        public Book(String title,String author, int quantity, double price) {
-            this.title = title;
-            this.author = author;
-            this.quantity = quantity;
-            this.price = price;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-        public String getAuthor() {
-            return author;
-        }
-        public int getQuantity() {
-            return quantity;
-        }
-
-        public double getPrice() {
-            return price;
-        }
-    }
-
-    static class CartItem {
-        private Book book;
-        private int quantity;
-
-        public CartItem(Book book, int quantity) {
-            this.book = book;
-            this.quantity = quantity;
-        }
-
-        public Book getBook() {
-            return book;
-        }
-
-        public int getQuantity() {
-            return quantity;
-        }
-    }
+    // Inner classes for ButtonRenderer and ButtonEditor
+    // (These can remain the same as your original code)
 
     static class ButtonRenderer extends JButton implements TableCellRenderer {
+
         public ButtonRenderer() {
             setOpaque(true);
         }
@@ -321,6 +216,7 @@ public class BookStoreApp {
     }
 
     class ButtonEditor extends DefaultCellEditor {
+
         protected JButton button;
         private String label;
         private boolean isPushed;
@@ -329,14 +225,7 @@ public class BookStoreApp {
             super(checkBox);
             button = new JButton();
             button.setOpaque(true);
-            button.addActionListener(e -> {
-                fireEditingStopped(); // Ensure the editing is stopped before taking action
-                int selectedRow = bookTable.getSelectedRow();
-                if (selectedRow != -1) { // Check if a row is selected
-                    Book selectedBook = books.get(selectedRow);
-                    addToCart(selectedBook);
-                }
-            });
+            button.addActionListener(e -> fireEditingStopped());
         }
 
         @Override
@@ -350,8 +239,21 @@ public class BookStoreApp {
 
         @Override
         public Object getCellEditorValue() {
+            if (isPushed) {
+                int selectedRow = bookTable.getSelectedRow();
+                if (selectedRow != -1) {
+                    Book selectedBook = books.get(selectedRow);
+                    String input = JOptionPane.showInputDialog(frame, "Enter quantity:");
+                    try {
+                        int quantity = Integer.parseInt(input);
+                        addToCart(selectedBook, quantity);
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(frame, "Invalid quantity", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
             isPushed = false;
-            return label; // Return the label as the cell value
+            return label;
         }
 
         @Override
