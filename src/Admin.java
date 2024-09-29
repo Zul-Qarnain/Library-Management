@@ -2,86 +2,100 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Admin {
+
     private JFrame frame;
     private JTable bookTable;
     private DefaultTableModel tableModel;
     private JTextField searchField;
     private List<Book> books;
-    private static final String FILE_NAME = "Bookdata.txt";
+
+    private static final String BOOK_DATA_FILE = "Bookdata.txt";
+    private static final String TRANSACTION_DATA_FILE = "transactions.txt";
 
     public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            try {
-                Admin window = new Admin();
-                window.frame.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        EventQueue.invokeLater(() -> new Admin());
     }
 
     public Admin() {
-        initialize();
-        books = new ArrayList<>();
-        loadBooksFromFile();
+        books = loadBooksFromFile(BOOK_DATA_FILE);
+        initializeUI();
     }
 
-    private void initialize() {
+    private void initializeUI() {
         frame = new JFrame("Book Store Admin");
         frame.setBounds(100, 100, 800, 600);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.getContentPane().setLayout(new BorderLayout(0, 0));
 
-        JPanel panel = new JPanel();
-        frame.getContentPane().add(panel, BorderLayout.NORTH);
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        // Create a top panel for buttons and the logout button
+        JPanel topPanel = new JPanel(new BorderLayout());
 
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         JButton btnAddBook = new JButton("Add Book");
         btnAddBook.addActionListener(e -> addBook());
-        panel.add(btnAddBook);
+        buttonPanel.add(btnAddBook);
 
         JLabel lblSearch = new JLabel("Search:");
-        panel.add(lblSearch);
-
-        searchField = new JTextField();
-        panel.add(searchField);
-        searchField.setColumns(10);
-
+        searchField = new JTextField(15);
         JButton btnSearch = new JButton("Search");
         btnSearch.addActionListener(e -> searchBooks());
-        panel.add(btnSearch);
 
-        JScrollPane scrollPane = new JScrollPane();
-        frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
+        buttonPanel.add(lblSearch);
+        buttonPanel.add(searchField);
+        buttonPanel.add(btnSearch);
 
-        bookTable = new JTable();
+        // Add button panel to the WEST of topPanel
+        topPanel.add(buttonPanel, BorderLayout.WEST);
+
+        // Logout button
+        JButton btnLogout = new JButton("Logout");
+        btnLogout.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                frame.dispose();
+                Welcome.main(new String[]{});
+            }
+        });
+
+        // Add logout button to the EAST of topPanel
+        topPanel.add(btnLogout, BorderLayout.EAST);
+
+        // Add topPanel to the NORTH of the frame
+        frame.getContentPane().add(topPanel, BorderLayout.NORTH);
+
         tableModel = new DefaultTableModel(
-                new Object[][]{}, // Empty table to start
-                new String[]{"Title", "Author", "Quantity", "Price", "Edit", "Remove"} // Columns for book data
+                new Object[][]{},
+                new String[]{"Title", "Author", "Quantity", "Price", "Edit", "Remove"}
         ) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 4 || column == 5; // Only "Edit" and "Remove" columns are editable
+                return column == 4 || column == 5;
             }
         };
-        bookTable.setModel(tableModel);
-        scrollPane.setViewportView(bookTable);
-
-        // Set custom cell renderer and editor for the "Edit" and "Remove" columns
+        bookTable = new JTable(tableModel);
         bookTable.getColumnModel().getColumn(4).setCellRenderer(new ButtonRenderer());
         bookTable.getColumnModel().getColumn(4).setCellEditor(new ButtonEditor(new JCheckBox(), "Edit"));
 
         bookTable.getColumnModel().getColumn(5).setCellRenderer(new ButtonRenderer());
         bookTable.getColumnModel().getColumn(5).setCellEditor(new ButtonEditor(new JCheckBox(), "Remove"));
 
+        JScrollPane scrollPane = new JScrollPane(bookTable);
+        frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
+
+        updateTable();
+
         JButton btnViewSales = new JButton("View Sales");
-        btnViewSales.addActionListener(e -> viewSales());
+        btnViewSales.addActionListener(e -> viewSales(TRANSACTION_DATA_FILE));
         frame.getContentPane().add(btnViewSales, BorderLayout.SOUTH);
+
+        frame.setVisible(true);
     }
 
     private void addBook() {
@@ -123,54 +137,62 @@ public class Admin {
         ) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 4 || column == 5; // Only "Edit" and "Remove" columns are editable
+                return column == 4 || column == 5;
             }
         };
 
         for (Book book : books) {
-            if (book.getTitle().toLowerCase().contains(searchTerm) || book.getAuthor().toLowerCase().contains(searchTerm)) {
-                searchModel.addRow(new Object[]{book.getTitle(), book.getAuthor(), book.getQuantity(), book.getPrice(), "Edit", "Remove"});
+            if (book.getTitle().toLowerCase().contains(searchTerm)
+                    || book.getAuthor().toLowerCase().contains(searchTerm)) {
+                searchModel.addRow(new Object[]{
+                        book.getTitle(), book.getAuthor(), book.getQuantity(), book.getPrice(), "Edit", "Remove"
+                });
             }
         }
 
         bookTable.setModel(searchModel);
         bookTable.getColumnModel().getColumn(4).setCellRenderer(new ButtonRenderer());
         bookTable.getColumnModel().getColumn(4).setCellEditor(new ButtonEditor(new JCheckBox(), "Edit"));
+
         bookTable.getColumnModel().getColumn(5).setCellRenderer(new ButtonRenderer());
         bookTable.getColumnModel().getColumn(5).setCellEditor(new ButtonEditor(new JCheckBox(), "Remove"));
     }
 
     private void updateTable() {
-        tableModel.setRowCount(0); // Clear existing data
+        tableModel.setRowCount(0);
 
         for (Book book : books) {
-            tableModel.addRow(new Object[]{book.getTitle(), book.getAuthor(), book.getQuantity(), book.getPrice(), "Edit", "Remove"});
+            tableModel.addRow(new Object[]{
+                    book.getTitle(), book.getAuthor(), book.getQuantity(), book.getPrice(), "Edit", "Remove"
+            });
         }
     }
 
-    private void loadBooksFromFile() {
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_NAME))) {
+    private List<Book> loadBooksFromFile(String filename) {
+        List<Book> loadedBooks = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] bookData = line.split(",");
                 if (bookData.length == 4) {
-                    String title = bookData[0];
-                    String author = bookData[1];
-                    int quantity = Integer.parseInt(bookData[2]);
-                    double price = Double.parseDouble(bookData[3]);
-                    books.add(new Book(title, author, quantity, price));
+                    String title = bookData[0].trim();
+                    String author = bookData[1].trim();
+                    int quantity = Integer.parseInt(bookData[2].trim());
+                    double price = Double.parseDouble(bookData[3].trim());
+                    loadedBooks.add(new Book(title, author, quantity, price));
                 }
             }
-            updateTable();
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(frame, "Error loading books from file.", "Error", JOptionPane.ERROR_MESSAGE);
         }
+        return loadedBooks;
     }
 
     private void saveBooksToFile() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_NAME))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(BOOK_DATA_FILE))) {
             for (Book book : books) {
-                writer.write(book.getTitle() + "," + book.getAuthor() + "," + book.getQuantity() + "," + book.getPrice());
+                writer.write(book.getTitle() + "," + book.getAuthor() + ","
+                        + book.getQuantity() + "," + book.getPrice());
                 writer.newLine();
             }
         } catch (IOException ex) {
@@ -217,90 +239,28 @@ public class Admin {
         updateTable();
     }
 
-    private void viewSales() {
-        JDialog salesDialog = new JDialog(frame, "Sales Report", true);
-        salesDialog.setSize(600, 400);
-        salesDialog.setLayout(new BorderLayout());
-
-        DefaultTableModel salesTableModel = new DefaultTableModel(
-                new Object[][]{},
-                new String[]{"Transaction ID", "Phone Number", "Buyer's address", "Total Price"}
-        );
-        JTable salesTable = new JTable(salesTableModel);
-        JScrollPane scrollPane = new JScrollPane(salesTable);
-        salesDialog.add(scrollPane, BorderLayout.CENTER);
-
-        try (BufferedReader reader = new BufferedReader(new FileReader("cart.txt"))) {
+    private void viewSales(String filename) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+            StringBuilder salesData = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
-                String[] transactionData = line.split(",");
-                if (transactionData.length >= 4) {
-                    String transactionId = transactionData[1];
-                    String phoneNumber = transactionData[0];
-                    String buyerAddress = transactionData[3];
-                    String totalPrice = transactionData[4];
-
-                    salesTableModel.addRow(new Object[]{transactionId, phoneNumber, buyerAddress, totalPrice});
-                }
+                salesData.append(line).append("\n");
             }
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(frame, "Error loading sales data.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
 
-        JButton closeButton = new JButton("Close");
-        closeButton.addActionListener(e -> salesDialog.dispose());
-        salesDialog.add(closeButton, BorderLayout.SOUTH);
+            JTextArea textArea = new JTextArea(salesData.toString());
+            textArea.setEditable(false);
+            JScrollPane scrollPane = new JScrollPane(textArea);
+            JOptionPane.showMessageDialog(frame, scrollPane, "Sales Data", JOptionPane.INFORMATION_MESSAGE);
 
-        salesDialog.setVisible(true);
-    }
-
-    static class Book {
-        private String title;
-        private String author;
-        private int quantity;
-        private double price;
-
-        public Book(String title, String author, int quantity, double price) {
-            this.title = title;
-            this.author = author;
-            this.quantity = quantity;
-            this.price = price;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-        public void setTitle(String title) {
-            this.title = title;
-        }
-
-        public String getAuthor() {
-            return author;
-        }
-
-        public void setAuthor(String author) {
-            this.author = author;
-        }
-
-        public int getQuantity() {
-            return quantity;
-        }
-
-        public void setQuantity(int quantity) {
-            this.quantity = quantity;
-        }
-
-        public double getPrice() {
-            return price;
-        }
-
-        public void setPrice(double price) {
-            this.price = price;
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(frame, "Error reading sales data.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    // Inner classes for ButtonRenderer and ButtonEditor
+    // (These can remain the same as your original code)
     static class ButtonRenderer extends JButton implements TableCellRenderer {
+
         public ButtonRenderer() {
             setOpaque(true);
         }
@@ -314,6 +274,7 @@ public class Admin {
     }
 
     class ButtonEditor extends DefaultCellEditor {
+
         protected JButton button;
         private String label;
         private boolean isPushed;
@@ -325,7 +286,7 @@ public class Admin {
             button = new JButton();
             button.setOpaque(true);
             button.addActionListener(e -> {
-                fireEditingStopped(); // Ensure the editing is stopped before taking action
+                fireEditingStopped();
                 int selectedRow = bookTable.getSelectedRow();
                 if (selectedRow != -1) {
                     Book selectedBook = books.get(selectedRow);
