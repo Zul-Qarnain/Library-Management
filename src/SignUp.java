@@ -1,169 +1,123 @@
-import javax.swing.*; // Remove the extra '.'
-import java.awt.*;    // Remove the extra '.'
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-public class SignUp {
-    public static void main(String[] args) {
-        // Use FlatLaf look and feel
-        try {
-            UIManager.setLookAndFeel(new com.formdev.flatlaf.FlatDarkLaf());
-        } catch (UnsupportedLookAndFeelException ex) {
-            System.err.println("Failed to initialize LaF");
-        }
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 
-        JFrame frame = new JFrame("FlatLaf Sign Up");
+public class SignUp {
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Create an account");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(800, 600);
         frame.setLocationRelativeTo(null);
 
         JPanel panel = new JPanel();
         panel.setLayout(new GridBagLayout());
-        panel.setBackground(Color.decode("#212121"));
 
-        // Welcome message
         JLabel welcomeLabel = new JLabel("Create an account");
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        welcomeLabel.setForeground(Color.WHITE);
-        GridBagConstraints welcomeConstraints = new GridBagConstraints();
-        welcomeConstraints.gridx = 0;
-        welcomeConstraints.gridy = 0;
-        welcomeConstraints.gridwidth = 2;
-        welcomeConstraints.insets = new Insets(20, 0, 20, 0);
-        panel.add(welcomeLabel, welcomeConstraints);
+        addComponent(panel, welcomeLabel, 0, 0, 2, 1, GridBagConstraints.CENTER);
 
-        // Username field
         JLabel usernameLabel = new JLabel("Username");
         usernameLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        usernameLabel.setForeground(Color.WHITE);
-        GridBagConstraints usernameLabelConstraints = new GridBagConstraints();
-        usernameLabelConstraints.gridx = 0;
-        usernameLabelConstraints.gridy = 1;
-        usernameLabelConstraints.anchor = GridBagConstraints.WEST;
-        usernameLabelConstraints.insets = new Insets(5, 0, 5, 0);
-        panel.add(usernameLabel, usernameLabelConstraints);
+        addComponent(panel, usernameLabel, 0, 1, 1, 1, GridBagConstraints.WEST);
 
         JTextField usernameField = new JTextField(20);
-        usernameField.putClientProperty("JTextField.placeholderText", "Enter your username");
-        GridBagConstraints usernameFieldConstraints = new GridBagConstraints();
-        usernameFieldConstraints.gridx = 0;
-        usernameFieldConstraints.gridy = 2;
-        usernameFieldConstraints.gridwidth = 2;
-        usernameFieldConstraints.fill = GridBagConstraints.HORIZONTAL;
-        usernameFieldConstraints.insets = new Insets(0, 0, 15, 0);
-        panel.add(usernameField, usernameFieldConstraints);
+        addComponent(panel, usernameField, 0, 2, 2, 1, GridBagConstraints.WEST);
 
-        // Email field
         JLabel emailLabel = new JLabel("Email");
         emailLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        emailLabel.setForeground(Color.WHITE);
-        GridBagConstraints emailLabelConstraints = new GridBagConstraints();
-        emailLabelConstraints.gridx = 0;
-        emailLabelConstraints.gridy = 3;
-        emailLabelConstraints.anchor = GridBagConstraints.WEST;
-        emailLabelConstraints.insets = new Insets(5, 0, 5, 0);
-        panel.add(emailLabel, emailLabelConstraints);
+        addComponent(panel, emailLabel, 0, 3, 1, 1, GridBagConstraints.WEST);
 
         JTextField emailField = new JTextField(20);
-        emailField.putClientProperty("JTextField.placeholderText", "Enter your email");
-        GridBagConstraints emailFieldConstraints = new GridBagConstraints();
-        emailFieldConstraints.gridx = 0;
-        emailFieldConstraints.gridy = 4;
-        emailFieldConstraints.gridwidth = 2;
-        emailFieldConstraints.fill = GridBagConstraints.HORIZONTAL;
-        emailFieldConstraints.insets = new Insets(0, 0, 15, 0);
-        panel.add(emailField, emailFieldConstraints);
+        addComponent(panel, emailField, 0, 4, 2, 1, GridBagConstraints.WEST);
 
-        // Password field
         JLabel passwordLabel = new JLabel("Password");
         passwordLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        passwordLabel.setForeground(Color.WHITE);
-        GridBagConstraints passwordLabelConstraints = new GridBagConstraints();
-        passwordLabelConstraints.gridx = 0;
-        passwordLabelConstraints.gridy = 5;
-        passwordLabelConstraints.anchor = GridBagConstraints.WEST;
-        passwordLabelConstraints.insets = new Insets(5, 0, 5, 0);
-        panel.add(passwordLabel, passwordLabelConstraints);
+        addComponent(panel, passwordLabel, 0, 5, 1, 1, GridBagConstraints.WEST);
 
         JPasswordField passwordField = new JPasswordField(20);
-        passwordField.putClientProperty("JPasswordField.placeholderText", "Enter your password");
-        GridBagConstraints passwordFieldConstraints = new GridBagConstraints();
-        passwordFieldConstraints.gridx = 0;
-        passwordFieldConstraints.gridy = 6;
-        passwordFieldConstraints.gridwidth = 2;
-        passwordFieldConstraints.fill = GridBagConstraints.HORIZONTAL;
-        passwordFieldConstraints.insets = new Insets(0, 0, 15, 0);
-        panel.add(passwordField, passwordFieldConstraints);
+        addComponent(panel, passwordField, 0, 6, 2, 1, GridBagConstraints.WEST);
 
-        // Confirm password field
         JLabel confirmPasswordLabel = new JLabel("Confirm Password");
         confirmPasswordLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        confirmPasswordLabel.setForeground(Color.WHITE);
-        GridBagConstraints confirmPasswordLabelConstraints = new GridBagConstraints();
-        confirmPasswordLabelConstraints.gridx = 0;
-        confirmPasswordLabelConstraints.gridy = 7;
-        confirmPasswordLabelConstraints.anchor = GridBagConstraints.WEST;
-        confirmPasswordLabelConstraints.insets = new Insets(5, 0, 5, 0);
-        panel.add(confirmPasswordLabel, confirmPasswordLabelConstraints);
+        addComponent(panel, confirmPasswordLabel, 0, 7, 1, 1, GridBagConstraints.WEST);
 
         JPasswordField confirmPasswordField = new JPasswordField(20);
-        confirmPasswordField.putClientProperty("JPasswordField.placeholderText", "Confirm your password");
-        GridBagConstraints confirmPasswordFieldConstraints = new GridBagConstraints();
-        confirmPasswordFieldConstraints.gridx = 0;
-        confirmPasswordFieldConstraints.gridy = 8;
-        confirmPasswordFieldConstraints.gridwidth = 2;
-        confirmPasswordFieldConstraints.fill = GridBagConstraints.HORIZONTAL;
-        confirmPasswordFieldConstraints.insets = new Insets(0, 0, 15, 0);
-        panel.add(confirmPasswordField, confirmPasswordFieldConstraints);
+        addComponent(panel, confirmPasswordField, 0, 8, 2, 1, GridBagConstraints.WEST);
 
-        // Signup button
         JButton signupButton = new JButton("Sign Up");
         signupButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Handle signup logic here
                 String username = usernameField.getText();
                 String email = emailField.getText();
                 String password = new String(passwordField.getPassword());
                 String confirmPassword = new String(confirmPasswordField.getPassword());
-                // ... (Validate and process signup data)
+
+                if (!password.equals(confirmPassword)) {
+                    JOptionPane.showMessageDialog(frame, "Passwords do not match!",
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (username.isEmpty() || email.isEmpty() || password.isEmpty()) {
+                    JOptionPane.showMessageDialog(frame, "Please fill in all fields!",
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // In a real application, hash the password securely before storing!
+                // For this example, we are simply writing it to the file.
+
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("admininfo.txt", true))) {
+                    writer.write(username + "," + password);
+                    writer.newLine();
+                    JOptionPane.showMessageDialog(frame, "Signup successful!",
+                            "Success", JOptionPane.INFORMATION_MESSAGE);
+                    frame.dispose();
+                    Login.main(new String[]{});
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(frame, "Error during signup: " + ex.getMessage(),
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
-        GridBagConstraints signupButtonConstraints = new GridBagConstraints();
-        signupButtonConstraints.gridx = 0;
-        signupButtonConstraints.gridy = 9;
-        signupButtonConstraints.gridwidth = 2;
-        signupButtonConstraints.fill = GridBagConstraints.HORIZONTAL;
-        signupButtonConstraints.insets = new Insets(10, 0, 10, 0);
-        panel.add(signupButton, signupButtonConstraints);
+        addComponent(panel, signupButton, 0, 9, 2, 1, GridBagConstraints.CENTER);
 
-        // Login link
         JLabel loginLabel = new JLabel("Already have an account? ");
         loginLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        loginLabel.setForeground(Color.LIGHT_GRAY);
-        GridBagConstraints loginLabelConstraints = new GridBagConstraints();
-        loginLabelConstraints.gridx = 0;
-        loginLabelConstraints.gridy = 10;
-        loginLabelConstraints.anchor = GridBagConstraints.EAST;
-        panel.add(loginLabel, loginLabelConstraints);
+        addComponent(panel, loginLabel, 0, 10, 1, 1, GridBagConstraints.EAST);
 
         JLabel loginLink = new JLabel("<html><a href='#'>Log in</a></html>");
         loginLink.setFont(new Font("Arial", Font.PLAIN, 14));
         loginLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        loginLink.setForeground(Color.decode("#5865F2")); // Discord blue
-        loginLink.addMouseListener(new MouseAdapter() {
+        loginLink.setForeground(Color.BLUE);
+        loginLink.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                // Switch back to the login page
-                frame.dispose(); // Close the signup frame
-                FlatLafLogin.main(new String[]{}); // Open the login frame
+                frame.dispose();
+                Login.main(new String[]{});
             }
         });
-        GridBagConstraints loginLinkConstraints = new GridBagConstraints();
-        loginLinkConstraints.gridx = 1;
-        loginLinkConstraints.gridy = 10;
-        loginLinkConstraints.anchor = GridBagConstraints.WEST;
-        panel.add(loginLink, loginLinkConstraints);
+        addComponent(panel, loginLink, 1, 10, 1, 1, GridBagConstraints.WEST);
 
         frame.add(panel);
         frame.setVisible(true);
-    }}
+    }
+
+    private static void addComponent(JPanel panel, JComponent component, int gridx, int gridy,
+                                     int gridwidth, int gridheight, int anchor) {
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = gridx;
+        constraints.gridy = gridy;
+        constraints.gridwidth = gridwidth;
+        constraints.gridheight = gridheight;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.insets = new Insets(5, 20, 5, 20);
+        constraints.anchor = anchor;
+        panel.add(component, constraints);
+    }
+}
