@@ -35,8 +35,8 @@ public class Payment extends JFrame {
 
         JPanel paymentPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         paymentPanel.add(new JLabel("Select Payment Method:"));
-        JRadioButton bKashButton = new JRadioButton("bKash");
-        JRadioButton nagadButton = new JRadioButton("Nagad");
+        JRadioButton bKashButton = new JRadioButton("Akash");
+        JRadioButton nagadButton = new JRadioButton("Baki");
         ButtonGroup paymentGroup = new ButtonGroup();
         paymentGroup.add(bKashButton);
         paymentGroup.add(nagadButton);
