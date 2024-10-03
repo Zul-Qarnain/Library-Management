@@ -45,8 +45,8 @@ public class Payment extends JFrame {
         paymentPanel.add(new JLabel("Select Payment Method:"));
 
         // Add radio buttons for bKash and Nagad
-        JRadioButton bKashButton = new JRadioButton("bKash");
-        JRadioButton nagadButton = new JRadioButton("Nagad");
+        JRadioButton bKashButton = new JRadioButton("Akash");
+        JRadioButton nagadButton = new JRadioButton("Baki");
         ButtonGroup paymentGroup = new ButtonGroup();
         paymentGroup.add(bKashButton);
         paymentGroup.add(nagadButton);
