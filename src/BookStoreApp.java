@@ -31,51 +31,62 @@ public class BookStoreApp {
     }
 
     // Method to initialize the User Interface
-    private void initializeUI() {
-        frame = new JFrame("Book Store"); // Create the main window
-        frame.setBounds(100, 100, 800, 600); // Set the size and position
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Close app on window close
-        frame.getContentPane().setLayout(new BorderLayout(0, 0)); // Set layout manager
+   private void initializeUI() {
+    frame = new JFrame("Book Store");
+    frame.setBounds(100, 100, 800, 600);
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    frame.getContentPane().setLayout(new BorderLayout(0, 0));
 
-        // Create a search panel at the top
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        JLabel lblSearch = new JLabel("Search:");
-        searchField = new JTextField(15); // Search input
-        JButton btnSearch = new JButton("Search"); // Search button
-        btnSearch.addActionListener(e -> searchBooks()); // Search button action listener
+    // Create a search panel at the top
+    JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+    JLabel lblSearch = new JLabel("Search:");
+    searchField = new JTextField(15);
+    JButton btnSearch = new JButton("Search");
+    btnSearch.addActionListener(e -> searchBooks());
 
-        // Add search components to search panel
-        searchPanel.add(lblSearch);
-        searchPanel.add(searchField);
-        searchPanel.add(btnSearch);
-        frame.getContentPane().add(searchPanel, BorderLayout.NORTH); // Add search panel to the frame
+    // Add search components to search panel
+    searchPanel.add(lblSearch);
+    searchPanel.add(searchField);
+    searchPanel.add(btnSearch);
+    
+    // Create Main Window button
+    JButton btnMainWindow = new JButton("Main Window");
+    btnMainWindow.addActionListener(e -> {
+        frame.dispose(); // Close current frame
+        Welcome.main(new String[]{}); // Open welcome screen
+    });
+    
+    // Add Main Window button to the search panel on the right
+    searchPanel.add(btnMainWindow);
+    frame.getContentPane().add(searchPanel, BorderLayout.NORTH);
 
-        // Table setup with columns for book details and action buttons
-        tableModel = new DefaultTableModel(new Object[][]{}, new String[]{
-                "Title", "Author", "Quantity", "Price", "Action"
-        }) {
-            // Make only the 'Action' column editable
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return column == 4;
-            }
-        };
+    // Table setup
+    tableModel = new DefaultTableModel(new Object[][]{}, new String[]{
+            "Title", "Author", "Quantity", "Price", "Action"
+    }) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return column == 4;
+        }
+    };
 
-        // Create table and add custom renderers/editors for the "Action" buttons
-        bookTable = new JTable(tableModel);
-        bookTable.getColumnModel().getColumn(4).setCellRenderer(new ButtonRenderer());
-        bookTable.getColumnModel().getColumn(4).setCellEditor(new ButtonEditor(new JCheckBox()));
-        JScrollPane scrollPane = new JScrollPane(bookTable); // Add scroll bar
-        frame.getContentPane().add(scrollPane, BorderLayout.CENTER); // Add table to the frame
+    // Create table
+    bookTable = new JTable(tableModel);
+    bookTable.getColumnModel().getColumn(4).setCellRenderer(new ButtonRenderer());
+    bookTable.getColumnModel().getColumn(4).setCellEditor(new ButtonEditor(new JCheckBox()));
+    JScrollPane scrollPane = new JScrollPane(bookTable);
+    frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
 
-        updateTable(); // Load books into the table
+    updateTable();
 
-        // Button to view the shopping cart
-        JButton btnViewCart = new JButton("View Cart");
-        btnViewCart.addActionListener(e -> viewCart()); // Cart button action listener
-        frame.getContentPane().add(btnViewCart, BorderLayout.SOUTH); // Add cart button to the frame
-        frame.setVisible(true); // Show the window
-    }
+    // Button to view the shopping cart
+    JButton btnViewCart = new JButton("View Cart");
+    btnViewCart.addActionListener(e -> viewCart());
+    frame.getContentPane().add(btnViewCart, BorderLayout.SOUTH);
+
+    frame.setVisible(true);
+}
+
 
     // Method to load books from a file
     private List<Book> loadBooksFromFile(String filename) {
